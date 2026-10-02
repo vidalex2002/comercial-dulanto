@@ -1,5 +1,5 @@
 // ==========================================
-// ELEMENTOS DEL HTML
+// ELEMENTOS
 // ==========================================
 
 const productsContainer =
@@ -77,16 +77,8 @@ const searchInput =
 const categoryButtons =
     document.querySelectorAll(".category-card");
 
-
-// ==========================================
-// ESTADO DE LA TIENDA
-// ==========================================
-
 const storeStatus =
     document.getElementById("store-status");
-
-const statusDot =
-    document.getElementById("status-dot");
 
 const statusText =
     document.getElementById("status-text");
@@ -105,9 +97,6 @@ const STORAGE_KEY =
 const NUMERO_WHATSAPP =
     "51965123280";
 
-
-// Horario en minutos desde medianoche
-
 const HORA_APERTURA =
     (6 * 60) + 30;
 
@@ -116,8 +105,10 @@ const HORA_CIERRE =
 
 
 // ==========================================
-// ESTADO DE LA APP
+// ESTADO
 // ==========================================
+
+let productos = [];
 
 let carrito = [];
 
@@ -129,7 +120,96 @@ let textoBusqueda =
 
 
 // ==========================================
-// ESTADO ABIERTO / CERRADO
+// CARGAR PRODUCTOS DESDE SUPABASE
+// ==========================================
+
+async function cargarProductos() {
+
+    productsContainer.innerHTML = `
+        <div class="no-products">
+            Cargando productos...
+        </div>
+    `;
+
+
+    productCounter.textContent =
+        "Cargando...";
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("productos")
+            .select(
+                "id,nombre,categoria,presentacion,precio,stock,disponible,emoji"
+            )
+            .order(
+                "id",
+                {
+                    ascending: true
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Error cargando productos:",
+            error
+        );
+
+
+        productsContainer.innerHTML = `
+            <div class="no-products">
+                No se pudieron cargar los productos.
+            </div>
+        `;
+
+
+        productCounter.textContent =
+            "Error";
+
+
+        return false;
+
+    }
+
+
+    productos =
+        data.map(
+            producto => ({
+
+                ...producto,
+
+                precio:
+                    Number(
+                        producto.precio
+                    ),
+
+                stock:
+                    Number(
+                        producto.stock
+                    )
+
+            })
+        );
+
+
+    cargarCarrito();
+
+    mostrarProductos();
+
+    actualizarContadorCarrito();
+
+
+    return true;
+}
+
+
+// ==========================================
+// HORARIO
 // ==========================================
 
 function actualizarEstadoTienda() {
@@ -139,13 +219,19 @@ function actualizarEstadoTienda() {
 
 
     const minutosActuales =
-        (ahora.getHours() * 60) +
+        (
+            ahora.getHours() *
+            60
+        ) +
         ahora.getMinutes();
 
 
     const estaAbierto =
-        minutosActuales >= HORA_APERTURA &&
-        minutosActuales < HORA_CIERRE;
+        minutosActuales >=
+            HORA_APERTURA
+        &&
+        minutosActuales <
+            HORA_CIERRE;
 
 
     if (estaAbierto) {
@@ -166,7 +252,6 @@ function actualizarEstadoTienda() {
         storeStatus.classList.add(
             "open"
         );
-
 
     } else {
 
@@ -208,13 +293,13 @@ function guardarCarrito() {
 
 function cargarCarrito() {
 
-    const carritoGuardado =
+    const guardado =
         localStorage.getItem(
             STORAGE_KEY
         );
 
 
-    if (!carritoGuardado) {
+    if (!guardado) {
 
         carrito = [];
 
@@ -227,7 +312,7 @@ function cargarCarrito() {
 
         const datos =
             JSON.parse(
-                carritoGuardado
+                guardado
             );
 
 
@@ -243,51 +328,89 @@ function cargarCarrito() {
         carrito =
             datos
 
-                .map(itemGuardado => {
+                .map(
+                    itemGuardado => {
 
-                    const productoActual =
-                        productos.find(
-                            producto =>
-                                producto.id ===
-                                itemGuardado.id
-                        );
-
-
-                    if (!productoActual) {
-
-                        return null;
-
-                    }
+                        const producto =
+                            productos.find(
+                                item =>
+                                    item.id ===
+                                    Number(
+                                        itemGuardado.id
+                                    )
+                            );
 
 
-                    const cantidad =
-                        Number(
-                            itemGuardado.cantidad
-                        );
+                        if (!producto) {
+
+                            return null;
+
+                        }
 
 
-                    if (
-                        !Number.isFinite(cantidad) ||
-                        cantidad <= 0
-                    ) {
+                        /*
+                            Si un producto fue agotado
+                            desde administración,
+                            ya no permanece comprable
+                            en un carrito antiguo.
+                        */
 
-                        return null;
+                        if (
+                            !producto.disponible ||
+                            producto.stock <= 0
+                        ) {
 
-                    }
+                            return null;
+
+                        }
 
 
-                    return {
+                        let cantidad =
+                            Number(
+                                itemGuardado.cantidad
+                            );
 
-                        ...productoActual,
 
-                        cantidad:
+                        if (
+                            !Number.isFinite(
+                                cantidad
+                            ) ||
+                            cantidad <= 0
+                        ) {
+
+                            return null;
+
+                        }
+
+
+                        cantidad =
                             Math.floor(
                                 cantidad
-                            )
+                            );
 
-                    };
 
-                })
+                        /*
+                            Evitamos tener más unidades
+                            que el stock actual.
+                        */
+
+                        cantidad =
+                            Math.min(
+                                cantidad,
+                                producto.stock
+                            );
+
+
+                        return {
+
+                            ...producto,
+
+                            cantidad
+
+                        };
+
+                    }
+                )
 
                 .filter(
                     item =>
@@ -300,7 +423,7 @@ function cargarCarrito() {
     } catch (error) {
 
         console.error(
-            "Error al recuperar el carrito:",
+            "Error recuperando carrito:",
             error
         );
 
@@ -318,7 +441,7 @@ function cargarCarrito() {
 
 
 // ==========================================
-// CANTIDAD DE PRODUCTO
+// CANTIDAD
 // ==========================================
 
 function obtenerCantidadEnCarrito(
@@ -341,7 +464,7 @@ function obtenerCantidadEnCarrito(
 
 
 // ==========================================
-// CREAR PRODUCTO
+// TARJETA PRODUCTO
 // ==========================================
 
 function crearProducto(
@@ -354,23 +477,45 @@ function crearProducto(
         );
 
 
+    const agotado =
+        !producto.disponible ||
+        producto.stock <= 0;
+
+
     let controlCantidad = "";
 
 
-    if (cantidad === 0) {
+    if (agotado) {
+
+        controlCantidad = `
+            <span
+                style="
+                    font-weight: 700;
+                    color: #b91c1c;
+                    font-size: 13px;
+                "
+            >
+                Agotado
+            </span>
+        `;
+
+    }
+
+    else if (cantidad === 0) {
 
         controlCantidad = `
             <button
                 class="add-button"
                 data-action="agregar"
                 data-id="${producto.id}"
-                aria-label="Agregar ${producto.nombre}"
             >
                 +
             </button>
         `;
 
-    } else {
+    }
+
+    else {
 
         controlCantidad = `
             <div class="quantity-control">
@@ -379,7 +524,6 @@ function crearProducto(
                     class="quantity-button"
                     data-action="restar"
                     data-id="${producto.id}"
-                    aria-label="Restar ${producto.nombre}"
                 >
                     −
                 </button>
@@ -392,7 +536,6 @@ function crearProducto(
                     class="quantity-button"
                     data-action="agregar"
                     data-id="${producto.id}"
-                    aria-label="Agregar ${producto.nombre}"
                 >
                     +
                 </button>
@@ -407,7 +550,7 @@ function crearProducto(
         <article class="product-card">
 
             <div class="product-image">
-                ${producto.emoji}
+                ${producto.emoji || "📦"}
             </div>
 
             <div class="product-name">
@@ -435,7 +578,7 @@ function crearProducto(
 
 
 // ==========================================
-// FILTRAR PRODUCTOS
+// FILTROS
 // ==========================================
 
 function obtenerProductosFiltrados() {
@@ -450,7 +593,9 @@ function obtenerProductosFiltrados() {
         producto => {
 
             const coincideCategoria =
-                categoriaSeleccionada === "Todos" ||
+                categoriaSeleccionada ===
+                    "Todos"
+                ||
                 producto.categoria ===
                     categoriaSeleccionada;
 
@@ -499,17 +644,19 @@ function mostrarProductos() {
         "";
 
 
-    if (lista.length === 0) {
+    if (
+        lista.length === 0
+    ) {
 
         productsContainer.innerHTML = `
             <div class="no-products">
-
                 No encontramos productos.
-
             </div>
         `;
 
-    } else {
+    }
+
+    else {
 
         lista.forEach(
             producto => {
@@ -535,7 +682,7 @@ function mostrarProductos() {
 
 
 // ==========================================
-// BOTONES DE PRODUCTOS
+// CONTROLES PRODUCTOS
 // ==========================================
 
 function activarControlesCantidad() {
@@ -594,7 +741,7 @@ function activarControlesCantidad() {
 
 
 // ==========================================
-// AGREGAR PRODUCTO
+// AGREGAR
 // ==========================================
 
 function agregarAlCarrito(
@@ -616,6 +763,16 @@ function agregarAlCarrito(
     }
 
 
+    if (
+        !producto.disponible ||
+        producto.stock <= 0
+    ) {
+
+        return;
+
+    }
+
+
     const existente =
         carrito.find(
             item =>
@@ -626,9 +783,25 @@ function agregarAlCarrito(
 
     if (existente) {
 
+        if (
+            existente.cantidad >=
+            producto.stock
+        ) {
+
+            alert(
+                "No hay más unidades disponibles de este producto."
+            );
+
+            return;
+
+        }
+
+
         existente.cantidad++;
 
-    } else {
+    }
+
+    else {
 
         carrito.push({
 
@@ -649,7 +822,7 @@ function agregarAlCarrito(
 
 
 // ==========================================
-// RESTAR PRODUCTO
+// RESTAR
 // ==========================================
 
 function restarDelCarrito(
@@ -741,7 +914,7 @@ function calcularCantidadTotal() {
 
 
 // ==========================================
-// ACTUALIZAR INTERFAZ
+// INTERFAZ
 // ==========================================
 
 function actualizarInterfaz() {
@@ -780,17 +953,13 @@ function actualizarInterfaz() {
 
 
 // ==========================================
-// CONTADOR Y BARRA INFERIOR
+// BARRA CARRITO
 // ==========================================
 
 function actualizarContadorCarrito() {
 
     const cantidadTotal =
         calcularCantidadTotal();
-
-
-    const totalCompra =
-        calcularTotal();
 
 
     cartCount.textContent =
@@ -802,7 +971,7 @@ function actualizarContadorCarrito() {
 
 
     bottomCartTotal.textContent =
-        `S/ ${totalCompra.toFixed(2)}`;
+        `S/ ${calcularTotal().toFixed(2)}`;
 
 
     if (
@@ -815,7 +984,9 @@ function actualizarContadorCarrito() {
         bottomCart.style.display =
             "flex";
 
-    } else {
+    }
+
+    else {
 
         bottomCart.style.display =
             "none";
@@ -826,7 +997,7 @@ function actualizarContadorCarrito() {
 
 
 // ==========================================
-// ABRIR CARRITO
+// ABRIR / CERRAR
 // ==========================================
 
 function abrirCarrito() {
@@ -866,10 +1037,6 @@ function abrirCarrito() {
 }
 
 
-// ==========================================
-// CERRAR CARRITO
-// ==========================================
-
 function cerrarCarrito() {
 
     cartPanel.classList.remove(
@@ -898,7 +1065,7 @@ function cerrarCarrito() {
 
 
 // ==========================================
-// MOSTRAR VISTA CARRITO
+// VISTA CARRITO
 // ==========================================
 
 function mostrarVistaCarrito() {
@@ -952,7 +1119,7 @@ function renderizarCarrito() {
                 <div class="cart-item">
 
                     <div class="cart-item-image">
-                        ${producto.emoji}
+                        ${producto.emoji || "📦"}
                     </div>
 
                     <div class="cart-item-info">
@@ -1022,60 +1189,52 @@ function renderizarCarrito() {
 
 
 // ==========================================
-// CONTROLES DEL CARRITO
+// CONTROLES CARRITO
 // ==========================================
 
 function activarControlesCarrito() {
 
-    const botones =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-cart-action]"
+        )
+        .forEach(
+            boton => {
+
+                boton.addEventListener(
+                    "click",
+                    () => {
+
+                        const id =
+                            Number(
+                                boton.dataset.id
+                            );
+
+
+                        if (
+                            boton.dataset.cartAction ===
+                            "agregar"
+                        ) {
+
+                            agregarAlCarrito(
+                                id
+                            );
+
+                        }
+
+                        else {
+
+                            restarDelCarrito(
+                                id
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
         );
-
-
-    botones.forEach(
-        boton => {
-
-            boton.addEventListener(
-                "click",
-                () => {
-
-                    const idProducto =
-                        Number(
-                            boton.dataset.id
-                        );
-
-
-                    const accion =
-                        boton.dataset.cartAction;
-
-
-                    if (
-                        accion === "agregar"
-                    ) {
-
-                        agregarAlCarrito(
-                            idProducto
-                        );
-
-                    }
-
-
-                    if (
-                        accion === "restar"
-                    ) {
-
-                        restarDelCarrito(
-                            idProducto
-                        );
-
-                    }
-
-                }
-            );
-
-        }
-    );
 
 }
 
@@ -1163,12 +1322,12 @@ function obtenerTipoEntrega() {
 
 function actualizarTipoEntrega() {
 
-    const tipoEntrega =
+    const tipo =
         obtenerTipoEntrega();
 
 
     if (
-        tipoEntrega === "Delivery"
+        tipo === "Delivery"
     ) {
 
         addressGroup.style.display =
@@ -1178,7 +1337,9 @@ function actualizarTipoEntrega() {
         deliveryNote.style.display =
             "block";
 
-    } else {
+    }
+
+    else {
 
         addressGroup.style.display =
             "none";
@@ -1193,7 +1354,7 @@ function actualizarTipoEntrega() {
 
 
 // ==========================================
-// MÉTODO DE PAGO
+// PAGO
 // ==========================================
 
 function obtenerMetodoPago() {
@@ -1212,7 +1373,7 @@ function obtenerMetodoPago() {
 
 
 // ==========================================
-// MENSAJE WHATSAPP
+// WHATSAPP
 // ==========================================
 
 function generarMensajePedido() {
@@ -1229,7 +1390,7 @@ function generarMensajePedido() {
         obtenerTipoEntrega();
 
 
-    const metodoPago =
+    const pago =
         obtenerMetodoPago();
 
 
@@ -1279,17 +1440,13 @@ function generarMensajePedido() {
 
 
     mensaje +=
-        `Método de pago: ${metodoPago}`;
+        `Método de pago: ${pago}`;
 
 
     return mensaje;
 
 }
 
-
-// ==========================================
-// ABRIR WHATSAPP
-// ==========================================
 
 function enviarPedidoWhatsapp() {
 
@@ -1313,9 +1470,6 @@ function enviarPedidoWhatsapp() {
             "Por favor, ingresa tu nombre."
         );
 
-
-        customerName.focus();
-
         return;
 
     }
@@ -1327,23 +1481,7 @@ function enviarPedidoWhatsapp() {
     ) {
 
         alert(
-            "Por favor, ingresa la dirección de delivery."
-        );
-
-
-        customerAddress.focus();
-
-        return;
-
-    }
-
-
-    if (
-        carrito.length === 0
-    ) {
-
-        alert(
-            "Tu carrito está vacío."
+            "Por favor, ingresa la dirección."
         );
 
         return;
@@ -1355,12 +1493,8 @@ function enviarPedidoWhatsapp() {
         generarMensajePedido();
 
 
-    const url =
-        `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
-
-
     window.open(
-        url,
+        `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
         "_blank"
     );
 
@@ -1400,20 +1534,11 @@ categoryButtons.forEach(
                     boton.dataset.category;
 
 
-                if (
+                categoriaSeleccionada =
                     categoriaSeleccionada ===
-                    categoria
-                ) {
-
-                    categoriaSeleccionada =
-                        "Todos";
-
-                } else {
-
-                    categoriaSeleccionada =
-                        categoria;
-
-                }
+                        categoria
+                        ? "Todos"
+                        : categoria;
 
 
                 actualizarEstadoCategorias();
@@ -1432,13 +1557,10 @@ function actualizarEstadoCategorias() {
     categoryButtons.forEach(
         boton => {
 
-            const categoria =
-                boton.dataset.category;
-
-
             boton.classList.toggle(
                 "active-category",
-                categoria ===
+
+                boton.dataset.category ===
                     categoriaSeleccionada
             );
 
@@ -1449,7 +1571,7 @@ function actualizarEstadoCategorias() {
 
 
 // ==========================================
-// EVENTOS DEL PANEL
+// EVENTOS
 // ==========================================
 
 viewOrderButton.addEventListener(
@@ -1494,10 +1616,6 @@ whatsappButton.addEventListener(
 );
 
 
-// ==========================================
-// CAMBIO DE TIPO DE ENTREGA
-// ==========================================
-
 document
     .querySelectorAll(
         'input[name="delivery-type"]'
@@ -1515,46 +1633,25 @@ document
 
 
 // ==========================================
-// ESC PARA CERRAR PANEL EN PC
+// INICIAR
 // ==========================================
 
-document.addEventListener(
-    "keydown",
-    evento => {
+async function iniciarAplicacion() {
 
-        if (
-            evento.key === "Escape" &&
-            cartPanel.classList.contains(
-                "active"
-            )
-        ) {
+    actualizarEstadoTienda();
 
-            cerrarCarrito();
+    actualizarTipoEntrega();
 
-        }
-
-    }
-);
+    actualizarEstadoCategorias();
 
 
-// ==========================================
-// INICIAR APP
-// ==========================================
+    await cargarProductos();
 
-cargarCarrito();
-
-mostrarProductos();
-
-actualizarContadorCarrito();
-
-actualizarTipoEntrega();
-
-actualizarEstadoCategorias();
-
-actualizarEstadoTienda();
+}
 
 
-// Actualizamos el horario cada minuto.
+iniciarAplicacion();
+
 
 setInterval(
     actualizarEstadoTienda,
