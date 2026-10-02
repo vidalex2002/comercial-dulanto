@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Comercial Dulanto</title>
+
+    <link
+        rel="stylesheet"
+        href="css/styles.css"
+    >
+</head>
+
+
+<body>
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
+
+    <header class="header">
+
+        <div class="store-info">
+
+            <h1>
+                Comercial Dulanto
+            </h1>
+
+            <p>
+                Todo cerca de ti
+            </p>
+
+        </div>
+
+
+        <button
+            class="cart-button"
+            aria-label="Ver carrito"
+        >
+
+            🛒
+
+            <span class="cart-count">
+                0
+            </span>
+
+        </button>
+
+    </header>
+
+
+    <!-- ==========================================
+         ESTADO DE LA TIENDA
+    =========================================== -->
+
+    <section
+        class="status"
+        id="store-status"
+    >
+
+        <span
+            class="status-dot"
+            id="status-dot"
+        ></span>
+
+
+        <span
+            class="status-text"
+            id="status-text"
+        >
+            Verificando horario...
+        </span>
+
+
+        <span
+            class="status-time"
+            id="status-time"
+        >
+        </span>
+
+    </section>
+
+
+    <!-- ==========================================
+         BUSCADOR
+    =========================================== -->
+
+    <section class="search-section">
+
+        <div class="search-box">
+
+            <span class="search-icon">
+                🔎
+            </span>
+
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Buscar productos..."
+                autocomplete="off"
+            >
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         CATEGORÍAS
+    =========================================== -->
+
+    <section class="categories-section">
+
+        <h2>
+            Categorías
+        </h2>
+
+
+        <div class="categories-grid">
+
+            <button
+                class="category-card"
+                data-category="Bebidas"
+            >
+                <span class="category-icon">
+                    🥤
+                </span>
+
+                <span>
+                    Bebidas
+                </span>
+            </button>
+
+
+            <button
+                class="category-card"
+                data-category="Abarrotes"
+            >
+                <span class="category-icon">
+                    🍚
+                </span>
+
+                <span>
+                    Abarrotes
+                </span>
+            </button>
+
+
+            <button
+                class="category-card"
+                data-category="Snacks"
+            >
+                <span class="category-icon">
+                    🍪
+                </span>
+
+                <span>
+                    Snacks
+                </span>
+            </button>
+
+
+            <button
+                class="category-card"
+                data-category="Limpieza"
+            >
+                <span class="category-icon">
+                    🧴
+                </span>
+
+                <span>
+                    Limpieza
+                </span>
+            </button>
+
+
+            <button
+                class="category-card"
+                data-category="Lácteos"
+            >
+                <span class="category-icon">
+                    🥛
+                </span>
+
+                <span>
+                    Lácteos
+                </span>
+            </button>
+
+
+            <button
+                class="category-card"
+                data-category="Desayuno"
+            >
+                <span class="category-icon">
+                    ☕
+                </span>
+
+                <span>
+                    Desayuno
+                </span>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         PRODUCTOS
+    =========================================== -->
+
+    <section class="products-section">
+
+        <div class="products-header">
+
+            <h2>
+                Productos
+            </h2>
+
+            <span id="product-counter">
+                0 productos
+            </span>
+
+        </div>
+
+
+        <div
+            class="products-grid"
+            id="products-container"
+        >
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         BARRA INFERIOR DEL CARRITO
+    =========================================== -->
+
+    <div
+        class="bottom-cart"
+        id="bottom-cart"
+    >
+
+        <div class="bottom-cart-info">
+
+            <span id="bottom-cart-items">
+                0 productos
+            </span>
+
+            <strong id="bottom-cart-total">
+                S/ 0.00
+            </strong>
+
+        </div>
+
+
+        <button id="view-order-button">
+            Ver pedido →
+        </button>
+
+    </div>
+
+
+    <!-- ==========================================
+         FONDO DEL PANEL
+    =========================================== -->
+
+    <div
+        class="cart-overlay"
+        id="cart-overlay"
+    >
+    </div>
+
+
+    <!-- ==========================================
+         PANEL DEL CARRITO
+    =========================================== -->
+
+    <aside
+        class="cart-panel"
+        id="cart-panel"
+    >
+
+        <!-- HEADER -->
+
+        <div class="cart-panel-header">
+
+            <div>
+
+                <h2>
+                    Mi pedido
+                </h2>
+
+                <p>
+                    Revisa tus productos antes de continuar
+                </p>
+
+            </div>
+
+
+            <button
+                id="close-cart-button"
+                class="close-cart-button"
+                aria-label="Cerrar carrito"
+            >
+                ✕
+            </button>
+
+        </div>
+
+
+        <!-- PRODUCTOS -->
+
+        <div
+            class="cart-products"
+            id="cart-products"
+        >
+        </div>
+
+
+        <!-- RESUMEN -->
+
+        <div class="cart-summary">
+
+            <div class="cart-summary-row">
+
+                <span>
+                    Subtotal
+                </span>
+
+                <strong id="cart-subtotal">
+                    S/ 0.00
+                </strong>
+
+            </div>
+
+
+            <div class="cart-summary-row total-row">
+
+                <span>
+                    Total
+                </span>
+
+                <strong id="cart-total">
+                    S/ 0.00
+                </strong>
+
+            </div>
+
+
+            <button
+                class="continue-order-button"
+                id="continue-order-button"
+            >
+                Continuar pedido
+            </button>
+
+        </div>
+
+
+        <!-- ==========================================
+             CHECKOUT
+        =========================================== -->
+
+        <div
+            class="checkout-view"
+            id="checkout-view"
+        >
+
+            <button
+                class="back-cart-button"
+                id="back-cart-button"
+            >
+                ← Volver al carrito
+            </button>
+
+
+            <h2>
+                Finalizar pedido
+            </h2>
+
+
+            <p class="checkout-description">
+                Completa tus datos para enviar el pedido.
+            </p>
+
+
+            <!-- ENTREGA -->
+
+            <div class="checkout-group">
+
+                <label>
+                    ¿Cómo deseas recibirlo?
+                </label>
+
+
+                <div class="option-group">
+
+                    <label class="option-card">
+
+                        <input
+                            type="radio"
+                            name="delivery-type"
+                            value="Recojo en tienda"
+                            checked
+                        >
+
+                        <span>
+                            🏪 Recojo en tienda
+                        </span>
+
+                    </label>
+
+
+                    <label class="option-card">
+
+                        <input
+                            type="radio"
+                            name="delivery-type"
+                            value="Delivery"
+                        >
+
+                        <span>
+                            🛵 Delivery
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <!-- NOMBRE -->
+
+            <div class="checkout-group">
+
+                <label for="customer-name">
+                    Nombre
+                </label>
+
+                <input
+                    type="text"
+                    id="customer-name"
+                    placeholder="Ej. Vidal"
+                >
+
+            </div>
+
+
+            <!-- DIRECCIÓN -->
+
+            <div
+                class="checkout-group"
+                id="address-group"
+            >
+
+                <label for="customer-address">
+                    Dirección
+                </label>
+
+                <input
+                    type="text"
+                    id="customer-address"
+                    placeholder="Ej. Av. Principal 123"
+                >
+
+            </div>
+
+
+            <!-- MÉTODO DE PAGO -->
+
+            <div class="checkout-group">
+
+                <label>
+                    Método de pago
+                </label>
+
+
+                <div class="option-group">
+
+                    <label class="option-card">
+
+                        <input
+                            type="radio"
+                            name="payment-method"
+                            value="Yape"
+                            checked
+                        >
+
+                        <span>
+                            Yape
+                        </span>
+
+                    </label>
+
+
+                    <label class="option-card">
+
+                        <input
+                            type="radio"
+                            name="payment-method"
+                            value="Efectivo"
+                        >
+
+                        <span>
+                            Efectivo
+                        </span>
+
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <!-- TOTAL -->
+
+            <div class="checkout-total">
+
+                <span>
+                    Total productos
+                </span>
+
+                <strong id="checkout-total">
+                    S/ 0.00
+                </strong>
+
+            </div>
+
+
+            <!-- NOTA DELIVERY -->
+
+            <p
+                class="delivery-note"
+                id="delivery-note"
+            >
+                El costo de delivery será confirmado por WhatsApp.
+            </p>
+
+
+            <!-- WHATSAPP -->
+
+            <button
+                class="whatsapp-button"
+                id="whatsapp-button"
+            >
+                Enviar pedido por WhatsApp
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script src="data/productos.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>
